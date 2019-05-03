@@ -1,0 +1,63 @@
+--------------------  Install Nagios Server  ---------------
+
+# On Server:
+sysctl -w net.ipv6.conf.all.disable_ipv6=1
+sysctl -w net.ipv6.conf.default.disable_ipv6=1
+
+yum remove -y httpd
+rm -rf /var/www/html
+
+yum install -y nagios nagios-plugins-all nagios-plugins-nrpe nrpe httpd php
+
+systemctl enable httpd && systemctl restart httpd
+systemctl enable nagios && systemctl restart nagios
+
+dd if=/dev/zero of=/swap bs=1024 count=2097152
+
+mkswap /swap && chown root. /swap && chmod 0600 /swap && swapon /swap
+
+echo /swap swap swap dafaults 0 0 >> /etc/fstab
+echo vm.swappiness = 0 >> /etc/sysctl.conf && sysctl -p
+
+# create user and enter password
+htpasswd -c /etc/nagios/passwd nagiosadmin 
+
+# browse server from url:
+http://172.30.3.77/nagios
+
+
+---------------------------------------------------------------------
+
+------------------------- Add Host to Nagios server  ----------------
+
+sudo vi /usr/local/nagios/etc/servers/yourhost.cfg
+
+define host {
+        use                             linux-server
+        host_name                       yourhost
+        alias                           My first Apache server
+        address                         10.132.234.52
+        max_check_attempts              5
+        check_period                    24x7
+        notification_interval           30
+        notification_period             24x7
+}
+
+define service {
+        use                             generic-service
+        host_name                       yourhost
+        service_description             PING
+        check_command                   check_ping!100.0,20%!500.0,60%
+}
+
+define service {
+        use                             generic-service
+        host_name                       yourhost
+        service_description             SSH
+        check_command                   check_ssh
+        notifications_enabled           0
+}
+
+sudo systemctl reload nagios.service
+
+-------------------------------------------------------------------------------------
