@@ -1,0 +1,14 @@
+# On client macine to monitor:
+
+sudo yum install epel-release
+sudo yum install nagios nrpe nagios-plugins-all
+
+# modify nrpe.cfg
+sudo vi /etc/nagios/nrpe.cfg
+
+# add the following line to nrpe.cfg
+allowed_hosts=127.0.0.1,172.30.3.77
+
+sudo systemctl start nrpe.service
+sudo systemctl enable nrpe.service
+
